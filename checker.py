@@ -1,3 +1,4 @@
+import csv
 import requests
 import time
 
@@ -30,6 +31,8 @@ table.add_column("URL", style="green")
 
 start_time = time.time()
 
+scan_results = []
+
 
 def check_site(site_data):
 
@@ -43,16 +46,16 @@ def check_site(site_data):
         )
 
         if response.status_code == 200:
-            status = "[green]FOUND[/green]"
+            status = "FOUND"
 
         elif response.status_code == 404:
-            status = "[red]NOT FOUND[/red]"
+            status = "NOT FOUND"
 
         else:
-            status = f"[yellow]{response.status_code}[/yellow]"
+            status = str(response.status_code)
 
     except Exception:
-        status = "[bold red]ERROR[/bold red]"
+        status = "ERROR"
 
     return (site, status, url)
 
@@ -68,7 +71,35 @@ with ThreadPoolExecutor(max_workers=5) as executor:
 
         site, status, url = result
 
-        table.add_row(site, status, url)
+        scan_results.append((site, status, url))
+        
+        if status == "FOUND":
+            display_status = "[green]FOUND[/green]"
+
+        elif status == "NOT FOUND":
+            display_status = "[red]NOT FOUND[/red]"
+
+        else:
+            display_status = f"[yellow]{status}[/yellow]"
+
+        table.add_row(site, display_status, url)
+
+with open(
+    "results.csv",
+    mode="w",
+    newline="",
+    encoding="utf-8"
+) as file:
+
+    writer = csv.writer(file)
+
+    writer.writerow([
+        "Platform",
+        "Status",
+        "URL"
+    ])
+
+    writer.writerows(scan_results)
 
 end_time = time.time()
 

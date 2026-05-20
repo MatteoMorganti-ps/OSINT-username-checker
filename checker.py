@@ -1,6 +1,8 @@
 import requests
 import time
 
+from concurrent.futures import ThreadPoolExecutor
+
 from rich.console import Console
 from rich.table import Table
 
@@ -28,7 +30,10 @@ table.add_column("URL", style="green")
 
 start_time = time.time()
 
-for site, url in sites.items():
+
+def check_site(site_data):
+
+    site, url = site_data
 
     try:
         response = requests.get(
@@ -49,7 +54,21 @@ for site, url in sites.items():
     except Exception:
         status = "[bold red]ERROR[/bold red]"
 
-    table.add_row(site, status, url)
+    return (site, status, url)
+
+
+with ThreadPoolExecutor(max_workers=5) as executor:
+
+    results = executor.map(
+        check_site,
+        sites.items()
+    )
+
+    for result in results:
+
+        site, status, url = result
+
+        table.add_row(site, status, url)
 
 end_time = time.time()
 

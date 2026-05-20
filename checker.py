@@ -1,32 +1,61 @@
 import requests
-from rich import print
+import time
 
-username = input("[bold cyan] Inserisci username: [/bold cyan] ")
+from rich.console import Console
+from rich.table import Table
 
-sites ={
-    "Instagram": f"https://www.instagram.com/{username}/",
-    "Facebook": f"https://www.facebook.com/{username}",
+console = Console()
+
+username = input("Enter username: ")
+
+sites = {
     "GitHub": f"https://github.com/{username}",
     "Reddit": f"https://www.reddit.com/user/{username}",
-    "TikTok": f"https://www.tiktok.com/@{username}"
+    "TikTok": f"https://www.tiktok.com/@{username}",
+    "Instagram": f"https://www.instagram.com/{username}/",
+    "Facebook": f"https://www.facebook.com/{username}"
 }
 
 headers = {
     "User-Agent": "Mozilla/5.0"
 }
 
+table = Table(title=f"OSINT Username Scan: {username}")
+
+table.add_column("Platform", style="cyan")
+table.add_column("Status", style="bold")
+table.add_column("URL", style="green")
+
+start_time = time.time()
+
 for site, url in sites.items():
+
     try:
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=5
+        )
 
         if response.status_code == 200:
-            print(f"[green][+] Trovato su {site}[/green] -> {url}")
+            status = "[green]FOUND[/green]"
 
         elif response.status_code == 404:
-            print(f"[red][-] Non trovato su {site}[/red]")
+            status = "[red]NOT FOUND[/red]"
 
         else:
-            print(f"[yellow][!] Risposta {response.status_code} su {site}[/yellow]")
-    
-    except:
-        print(f"[red][!] Errore su {site}[/bold red] -> {e}")
+            status = f"[yellow]{response.status_code}[/yellow]"
+
+    except Exception:
+        status = "[bold red]ERROR[/bold red]"
+
+    table.add_row(site, status, url)
+
+end_time = time.time()
+
+console.print(table)
+
+console.print(
+    f"\n[bold cyan]Scan completed in "
+    f"{end_time - start_time:.2f} seconds[/bold cyan]"
+)
